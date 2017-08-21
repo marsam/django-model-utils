@@ -101,7 +101,11 @@ class FieldInstanceTracker(object):
             self.instance._deferred_fields = self.instance.get_deferred_fields()
             for field in self.instance._deferred_fields:
                 if django.VERSION >= (1, 10):
-                    field_obj = getattr(self.instance.__class__, field)
+                    field_obj = getattr(self.instance.__class__, field, None)
+                    # NB: There are custom descriptors which need a concrete
+                    #     instance e.g. FSMField (from django-fsm)
+                    if field_obj is None:
+                        field_obj = self.instance.__class__.__dict__.get(field)
                 else:
                     field_obj = self.instance.__class__.__dict__.get(field)
                 if isinstance(field_obj, FileDescriptor):
