@@ -112,8 +112,14 @@ class FieldInstanceTracker(object):
                     field_tracker = FileDescriptorTracker(field_obj.field)
                     setattr(self.instance.__class__, field, field_tracker)
                 else:
-                    field_tracker = DeferredAttributeTracker(
-                        field_obj.field_name, None)
+                    # NB: There are descriptors which hold the field as an
+                    #     attribute.
+                    #     e.g. PhoneNumberDescriptor (from django-phonenumber-field)
+                    if hasattr(field_obj, 'field') and isinstance(field_obj.field, models.Field):
+                        field_name = field_obj.field.name
+                    else:
+                        field_name = field_obj.field_name
+                    field_tracker = DeferredAttributeTracker(field_name, None)
                     setattr(self.instance.__class__, field, field_tracker)
         else:
             for field in self.fields:
